@@ -73,8 +73,10 @@ type KafkaClusterSpec struct {
 	// Envs defines environment variables for Kafka broker Pods.
 	// Adding the "+" prefix to the name prepends the value to that environment variable instead of overwriting it.
 	// Add the "+" suffix to append.
-	Envs                    []corev1.EnvVar `json:"envs,omitempty"`
-	KubernetesClusterDomain string          `json:"kubernetesClusterDomain,omitempty"`
+	Envs                    []corev1.EnvVar    `json:"envs,omitempty"`
+	Volumes                 []corev1.Volume    `json:"volumes,omitempty"`
+	Containers              []corev1.Container `json:"containers,omitempty"`
+	KubernetesClusterDomain string             `json:"kubernetesClusterDomain,omitempty"`
 }
 
 // KafkaClusterStatus defines the observed state of KafkaCluster

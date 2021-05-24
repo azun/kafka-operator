@@ -109,7 +109,7 @@ rm /var/run/wait/do-not-exit-yet`}
 			SecurityContext: brokerConfig.PodSecurityContext,
 			InitContainers:  getInitContainers(brokerConfig.InitContainers, r.KafkaCluster.Spec),
 			Affinity:        getAffinity(brokerConfig, r.KafkaCluster),
-			Containers: []corev1.Container{
+			Containers: append([]corev1.Container{
 				{
 					Name:  "kafka",
 					Image: util.GetBrokerImage(brokerConfig, r.KafkaCluster.Spec.GetClusterImage()),
@@ -162,8 +162,8 @@ fi`},
 					VolumeMounts: getVolumeMounts(brokerConfig.VolumeMounts, dataVolumeMount, r.KafkaCluster.Name, hasSSLSecrets),
 					Resources:    *brokerConfig.GetResources(),
 				},
-			},
-			Volumes:                       getVolumes(brokerConfig.Volumes, dataVolume, r.KafkaCluster.Name, hasSSLSecrets, id),
+			}, r.KafkaCluster.Spec.Containers...),
+			Volumes:                       getVolumes(brokerConfig.Volumes, dataVolume, r.KafkaCluster.Spec.Volumes, r.KafkaCluster.Name, hasSSLSecrets, id),
 			RestartPolicy:                 corev1.RestartPolicyNever,
 			TerminationGracePeriodSeconds: util.Int64Pointer(120),
 			ImagePullSecrets:              brokerConfig.GetImagePullSecrets(),
@@ -255,11 +255,12 @@ func getVolumeMounts(brokerConfigVolumeMounts, dataVolumeMount []corev1.VolumeMo
 	return volumeMounts
 }
 
-func getVolumes(brokerConfigVolumes, dataVolume []corev1.Volume, kafkaClusterName string, hasSSLSecrets bool, id int32) []corev1.Volume {
-	volumes := make([]corev1.Volume, 0, len(brokerConfigVolumes))
+func getVolumes(brokerConfigVolumes, dataVolume []corev1.Volume, defaultVolumes []corev1.Volume, kafkaClusterName string, hasSSLSecrets bool, id int32) []corev1.Volume {
+	volumes := make([]corev1.Volume, 0, len(brokerConfigVolumes)+len(defaultVolumes))
 	// clone the brokerConfig volumes
 	volumes = append(volumes, brokerConfigVolumes...)
 	volumes = append(volumes, dataVolume...)
+	volumes = append(volumes, defaultVolumes...)
 
 	if hasSSLSecrets {
 		volumes = append(volumes, generateVolumesForSSL(kafkaClusterName)...)
